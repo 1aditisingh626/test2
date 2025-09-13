@@ -52,4 +52,21 @@ limit 5
 select count(*) from vendors
 
 
+UPDATE users
+SET complaint_status = 'Not Complained'
+WHERE complaint_status IS NULL;
+
+UPDATE users
+SET complaint_priority = 'Not Complained'
+WHERE complaint_priority IS NULL;
+
+UPDATE users
+SET complaint_image_url = 'Not Complained'
+WHERE complaint_image_url IS NULL;
+
+UPDATE users
+SET review = 'Not Provided'
+WHERE review IS NULL;
+
+select * from users
 

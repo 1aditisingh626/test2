@@ -1,3 +1,4 @@
+# app.py
 from sqlalchemy import create_engine, text
 import pandas as pd
 import streamlit as st
@@ -73,18 +74,40 @@ def compute_vendor_trust(vendor_id):
 
 # ---------- Pages ----------
 def page_home(users, products, vendors):
+    # Custom CSS
     st.markdown("""
     <style>
-        .landing-title { font-size: 36px; font-weight: 800; color: #2C3E50; text-align: center; margin-bottom: 10px; }
-        .landing-sub { font-size: 20px; color: #16A085; text-align: center; margin-bottom: 30px; }
-        .landing-section { background: #F8F9F9; border-radius: 15px; padding: 25px; margin-bottom: 20px; box-shadow: 0px 4px 10px rgba(0,0,0,0.1); }
-        .feature-list li { font-size: 16px; margin-bottom: 8px; }
+        .landing-title {
+            font-size: 36px;
+            font-weight: 800;
+            color: #2C3E50;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .landing-sub {
+            font-size: 20px;
+            color: #16A085;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .landing-section {
+            background: #F8F9F9;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+        }
+        .feature-list li {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
     </style>
     """, unsafe_allow_html=True)
 
     st.markdown("<div class='landing-title'>🏷️ Product Quality Review & Complaint Platform</div>", unsafe_allow_html=True)
     st.markdown("<div class='landing-sub'>Empowering Consumers • Ensuring Safety • Driving Accountability</div>", unsafe_allow_html=True)
 
+    # ✅ Only count real complaints
     total = users['complaint_text'].notna().sum()
     resolved = users[users['complaint_text'].notna()]['complaint_status'].str.lower().eq('resolved').sum()
     resolved_pct = round((resolved/total*100),1) if total else 0
@@ -100,9 +123,10 @@ def page_home(users, products, vendors):
     <div class="landing-section">
         <h3>📖 About</h3>
         <p>
-        This platform allows consumers to <b>report product complaints</b>, 
-        submit <b>ratings & reviews</b>, track resolutions, and verify <b>FSSAI certification</b>.
-        Authorities can access insights to enforce product quality and safety.
+        This platform allows consumers to <b>report product complaints</b>,
+        submit <b>ratings & reviews</b>, and track resolutions.
+        It also verifies <b>FSSAI certification</b> and provides authorities with insights
+        to enforce product quality and safety.
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -115,9 +139,7 @@ def page_home(users, products, vendors):
             <li>✅ Complaint Tracking</li>
             <li>✅ FSSAI & Certification Checks</li>
             <li>✅ Analytics Dashboard</li>
-            <li>✅ Multilingual Chatbot</li>
-            <li>✅ Raw Data Downloads</li>
-            <li>✅ Power BI Integration (Optional)</li>
+            <li>✅ Mobile-First Design (PWA Ready)</li>
         </ul>
     </div>
     """, unsafe_allow_html=True)
@@ -129,30 +151,12 @@ def page_home(users, products, vendors):
             <li>💡 Empower consumers to voice quality issues</li>
             <li>⚖️ Assist authorities with enforcement data</li>
             <li>🔒 Improve product safety & vendor accountability</li>
-            <li>📊 Enable data-driven decision making via dashboards</li>
         </ul>
     </div>
     """, unsafe_allow_html=True)
 
-def page_powerbi_dashboard():
-    st.header("📊 Power BI Dashboard Embed")
-    st.markdown("""
-    <p>Embed your Power BI report here using the 'Publish to Web' link or iframe.</p>
-    <iframe width="100%" height="600" src="YOUR_POWERBI_EMBED_LINK_HERE" frameborder="0" allowFullScreen="true"></iframe>
-    """, unsafe_allow_html=True)
-
-# ---------- Include the rest of your existing pages ----------
-# page_submit_complaint(...)
-# page_track_complaints(...)
-# page_vendor_dashboard(...)
-# page_analytics(...)
-# page_chatbot(...)
-# page_raw_data(...)
-# ---------- Pages Continued ----------
-
 def page_submit_complaint(users, products, vendors):
     st.header("📝 Submit Complaint / Review")
-
     user_id = st.text_input("User ID (unique identifier)")
     name = st.text_input("Name")
     email = st.text_input("Email")
@@ -163,8 +167,8 @@ def page_submit_complaint(users, products, vendors):
 
     product_choice = st.selectbox("Select Product", list(product_map.keys()))
     vendor_choice = st.selectbox("Select Vendor", list(vendor_map.keys()))
-    fssai_code = st.text_input("Product FSSAI Code (optional)")
 
+    fssai_code = st.text_input("Product FSSAI Code (optional)")
     complaint_text = st.text_area("Complaint Details")
     rating = st.slider("Rating (1-5)", 1, 5)
     review = st.text_area("Review (optional)")
@@ -201,7 +205,6 @@ def page_submit_complaint(users, products, vendors):
             "review_date": datetime.today().date(),
             "review_sentiment": sentiment
         }
-
         try:
             insert_complaint_row(row)
             st.success(f"✅ Complaint submitted for {product_choice} (Vendor: {vendor_choice})")
@@ -209,15 +212,15 @@ def page_submit_complaint(users, products, vendors):
         except Exception as e:
             st.error(f"❌ Insert failed: {e}")
 
-
 def page_track_complaints():
     st.header("📌 Complaint Tracker")
     query_user = st.text_input("Enter User ID (or part of it)")
 
     if st.button("Search"):
         q = text("""
-            SELECT u.user_id, u.name, p.product_name, v.vendor_name, u.complaint_text,
-            u.complaint_status, u.complaint_priority, u.complaint_date, u.rating, u.review_sentiment
+            SELECT u.user_id, u.name, p.product_name, v.vendor_name,
+                   u.complaint_text, u.complaint_status, u.complaint_priority,
+                   u.complaint_date, u.rating, u.review_sentiment
             FROM users u
             LEFT JOIN products p ON u.product_id = p.product_id
             LEFT JOIN vendors v ON u.vendor_id = v.vendor_id
@@ -232,13 +235,10 @@ def page_track_complaints():
         else:
             st.warning("No complaints found.")
 
-
 def page_vendor_dashboard(vendors):
     st.header("🏭 Vendor Dashboard")
-
     vendor_choices = vendors['vendor_name'].astype(str).tolist()
     vendor_map = dict(zip(vendors['vendor_name'], vendors['vendor_id']))
-
     selected_vendor_name = st.selectbox("Select Vendor", vendor_choices)
     selected_vendor = vendor_map[selected_vendor_name]
 
@@ -248,8 +248,9 @@ def page_vendor_dashboard(vendors):
     st.write(f"Resolved Ratio: {round(resolved_ratio*100,2)}%")
 
     q = text("""
-        SELECT u.user_id, u.name, p.product_name, u.complaint_text, u.complaint_status,
-        u.complaint_priority, u.complaint_date, u.rating, u.review_sentiment
+        SELECT u.user_id, u.name, p.product_name,
+               u.complaint_text, u.complaint_status, u.complaint_priority,
+               u.complaint_date, u.rating, u.review_sentiment
         FROM users u
         LEFT JOIN products p ON u.product_id = p.product_id
         WHERE u.complaint_text IS NOT NULL AND u.vendor_id = :vendor_id
@@ -257,21 +258,21 @@ def page_vendor_dashboard(vendors):
     """)
     with engine.connect() as conn:
         df = pd.read_sql(q, conn, params={"vendor_id": selected_vendor})
+
     if not df.empty:
         st.subheader("Complaints against this vendor")
         st.dataframe(df)
     else:
         st.warning("No complaints for this vendor.")
 
-
 def page_analytics():
     st.header("📊 Analytics Dashboard")
 
-    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
-        "📦 Products", "🏭 Vendors", "⭐ Ratings", "👤 Consumers", "📈 Trends", "💬 Sentiment"
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "📦 Products", "🏭 Vendors", "⭐ Ratings", "👤 Consumers"
     ])
 
-    # --- Products ---
+    # ---------------- Products Tab ----------------
     with tab1:
         st.subheader("Top Complained Products")
         top_q = text("""
@@ -286,12 +287,13 @@ def page_analytics():
         with engine.connect() as conn:
             top_products = pd.read_sql(top_q, conn)
         if not top_products.empty:
-            fig = px.bar(top_products, x="product_name", y="total_complaints", title="Top Complained Products", text="total_complaints")
+            fig = px.bar(top_products, x="product_name", y="total_complaints",
+                         title="Top Complained Products", text="total_complaints")
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.info("No product complaints data available.")
 
-    # --- Vendors ---
+    # ---------------- Vendors Tab ----------------
     with tab2:
         st.subheader("Vendors with Most Complaints")
         vendor_q = text("""
@@ -306,24 +308,26 @@ def page_analytics():
         with engine.connect() as conn:
             vendor_data = pd.read_sql(vendor_q, conn)
         if not vendor_data.empty:
-            fig = px.bar(vendor_data, x="vendor_name", y="total_complaints", title="Top Vendors by Complaints", text="total_complaints")
+            fig = px.bar(vendor_data, x="vendor_name", y="total_complaints",
+                         title="Top Vendors by Complaints", text="total_complaints")
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.info("No vendor complaints data available.")
 
-    # --- Ratings ---
+    # ---------------- Ratings Tab ----------------
     with tab3:
         st.subheader("Ratings Distribution")
         ratings_q = text("SELECT rating FROM users WHERE rating IS NOT NULL AND complaint_text IS NOT NULL")
         with engine.connect() as conn:
             ratings = pd.read_sql(ratings_q, conn)
         if not ratings.empty:
-            fig = px.histogram(ratings, x="rating", nbins=5, title="Distribution of Ratings")
+            fig = px.histogram(ratings, x="rating", nbins=5,
+                               title="Distribution of Ratings")
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.info("No ratings data available.")
 
-    # --- Consumers ---
+    # ---------------- Consumers Tab ----------------
     with tab4:
         st.subheader("🏆 Top 5 Consumers Reporting Issues")
         reporters_q = text("""
@@ -341,101 +345,6 @@ def page_analytics():
         else:
             st.info("No consumer report data available.")
 
-    # --- Trends ---
-    with tab5:
-        st.subheader("Complaints Trend Over Time")
-        trend_q = text("""
-            SELECT complaint_date, COUNT(*) AS total
-            FROM users
-            WHERE complaint_text IS NOT NULL
-            GROUP BY complaint_date
-            ORDER BY complaint_date
-        """)
-        with engine.connect() as conn:
-            trend = pd.read_sql(trend_q, conn)
-        if not trend.empty:
-            fig = px.line(trend, x="complaint_date", y="total", title="Complaints Over Time")
-            st.plotly_chart(fig, use_container_width=True)
-        else:
-            st.info("No trend data available.")
-
-    # --- Sentiment ---
-    with tab6:
-        st.subheader("Sentiment Distribution (Reviews)")
-        sentiment_q = text("""
-            SELECT review_sentiment, COUNT(*) AS total
-            FROM users
-            WHERE complaint_text IS NOT NULL AND review_sentiment IS NOT NULL
-            GROUP BY review_sentiment
-        """)
-        with engine.connect() as conn:
-            sents = pd.read_sql(sentiment_q, conn)
-        if not sents.empty:
-            fig = px.pie(sents, names="review_sentiment", values="total", title="Review Sentiment Breakdown")
-            st.plotly_chart(fig, use_container_width=True)
-        else:
-            st.info("No sentiment data available.")
-
-
-def page_chatbot():
-    st.header("💬 Multilingual Chatbot")
-    # Basic FAQs
-    faqs = {
-        "en": {
-            "What is this platform?": "This is a complaint management and analytics platform for product quality.",
-            "How do I submit a complaint?": "Go to the Submit Complaint page in the sidebar.",
-            "Can I track my complaint?": "Yes, use the Track Complaints page to see the status.",
-            "Show quick stats": "Use this feature to see total complaints, resolved %, and top products/vendors."
-        },
-        "hi": {
-            "यह प्लेटफ़ॉर्म क्या है?": "यह उत्पाद गुणवत्ता के लिए शिकायत प्रबंधन और विश्लेषण प्लेटफ़ॉर्म है।",
-            "मैं शिकायत कैसे दर्ज करूँ?": "साइडबार में शिकायत दर्ज करें पेज पर जाएँ।",
-            "क्या मैं अपनी शिकायत देख सकता हूँ?": "हाँ, ट्रैक शिकायतें पेज पर जाकर स्थिति देखें।",
-            "तेज़ आँकड़े दिखाएँ": "इस फीचर का उपयोग करके कुल शिकायतें, हल की गई %, और शीर्ष उत्पाद/विक्रेता देखें।"
-        }
-    }
-
-    lang = st.radio("Select Language / भाषा चुनें", ["en", "hi"], horizontal=True)
-    question = st.selectbox("Choose a question / प्रश्न चुनें", list(faqs[lang].keys()))
-
-    if st.button("Get Answer"):
-        answer = faqs[lang][question]
-        st.success(answer)
-
-        # Quick stats feature
-        if question in ["Show quick stats", "तेज़ आँकड़े दिखाएँ"]:
-            with engine.connect() as conn:
-                total = pd.read_sql(text("SELECT COUNT(*) AS total FROM users WHERE complaint_text IS NOT NULL"), conn)['total'][0]
-                resolved = pd.read_sql(text("SELECT COUNT(*) AS resolved FROM users WHERE complaint_text IS NOT NULL AND LOWER(complaint_status)='resolved'"), conn)['resolved'][0]
-
-                top_products = pd.read_sql(text("""
-                    SELECT p.product_name, COUNT(*) AS total_complaints
-                    FROM users u
-                    JOIN products p ON u.product_id = p.product_id
-                    WHERE u.complaint_text IS NOT NULL
-                    GROUP BY p.product_name
-                    ORDER BY total_complaints DESC
-                    LIMIT 5
-                """), conn)
-
-                top_vendors = pd.read_sql(text("""
-                    SELECT v.vendor_name, COUNT(*) AS total_complaints
-                    FROM users u
-                    JOIN vendors v ON u.vendor_id = v.vendor_id
-                    WHERE u.complaint_text IS NOT NULL
-                    GROUP BY v.vendor_name
-                    ORDER BY total_complaints DESC
-                    LIMIT 5
-                """), conn)
-
-            st.info(f"Total complaints: {total}")
-            st.info(f"Resolved %: {round((resolved/total*100) if total else 0,1)}%")
-            st.write("Top 5 Products by Complaints:")
-            st.table(top_products)
-            st.write("Top 5 Vendors by Complaints:")
-            st.table(top_vendors)
-
-
 def page_raw_data(users, products, vendors):
     st.header("🔎 Raw Tables & Downloads")
     if st.checkbox("Show users"):
@@ -448,14 +357,13 @@ def page_raw_data(users, products, vendors):
         st.dataframe(vendors)
         st.download_button("Download Vendors CSV", vendors.to_csv(index=False), "vendors.csv")
 
-
 # ---------- Layout ----------
 st.set_page_config(page_title="Product Quality Platform", layout="wide")
 st.sidebar.title("Navigation")
 users, products, vendors = read_tables()
 
 page = st.sidebar.selectbox("Go to", [
-    "Home","Submit Complaint","Track Complaint","Vendor Dashboard","Analytics","Chatbot","Raw Data","Power BI Dashboard"
+    "Home","Submit Complaint","Track Complaint","Vendor Dashboard","Analytics","Raw Data"
 ])
 
 if page=="Home": page_home(users, products, vendors)
@@ -463,6 +371,4 @@ elif page=="Submit Complaint": page_submit_complaint(users, products, vendors)
 elif page=="Track Complaint": page_track_complaints()
 elif page=="Vendor Dashboard": page_vendor_dashboard(vendors)
 elif page=="Analytics": page_analytics()
-elif page=="Chatbot": page_chatbot()
 elif page=="Raw Data": page_raw_data(users, products, vendors)
-elif page=="Power BI Dashboard": page_powerbi_dashboard()
